@@ -1,0 +1,43 @@
+name: Deploy Windows Service
+
+on:
+  push:
+    branches:
+      - main  # Change this based on your branch strategy
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download and Extract Deployment Package
+        run: |
+          echo "Downloading and extracting package..."
+          mkdir -p C:\Deploy
+          # Replace this with actual package download logic if needed
+          # e.g., curl, Invoke-WebRequest, GitHub Artifacts, etc.
+
+      - name: Install/Update Windows Service
+        shell: powershell
+        run: |
+          $serviceName = "SampleWindowsService"
+          $servicePath = "C:\Deploy\sample-package.exe"
+
+          if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+            Write-Host "Stopping existing service..."
+            Stop-Service -Name $serviceName -Force
+            sc.exe delete $serviceName
+          }
+
+          Write-Host "Creating and starting the Windows Service..."
+          sc.exe create $serviceName binPath= $servicePath start= auto
+          Start-Service -Name $serviceName
+
+      - name: Verify Service Status
+        shell: powershell
+        run: |
+          Get-Service -Name "SampleWindowsService"
